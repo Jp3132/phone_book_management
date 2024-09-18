@@ -5,25 +5,23 @@ import logging
 
 logging.basicConfig(filename='phonebook.log', level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
+                    
 def main():
     phonebook = PhoneBook()
-    
+
     while True:
         print("\nPhone Book Menu")
         print("1. Add a new contact")
         print("2. Update a contact")
         print("3. Delete a contact")
-        print("4. Search for a contact")
+        print("4. Search for a contact (with filtering, sorting, and grouping)")
         print("5. Display all contacts")
-        print("6. Sort contacts")
-        print("7. Group contacts by last name")
-        print("8. Batch import contacts from CSV")
-        print("9. Search contacts by date range")
-        print("10. View log")
-        print("11. Exit")
-        
+        print("6. Batch import contacts from CSV")
+        print("7. View log")
+        print("8. Exit")
+
         choice = input("\nSelect an option: ")
-        
+
         if choice == "1":
             first_name = input("First name: ")
             last_name = input("Last name: ")
@@ -37,7 +35,7 @@ def main():
                 phonebook.add_contact(contact)
             except ValueError as e:
                 print(e)
-        
+
         elif choice == "2":
             first_name = input("First name of contact to update: ")
             last_name = input("Last name: ")
@@ -49,57 +47,72 @@ def main():
                 new_phone_number = input(f"New phone number ({contact.phone_number}): ") or contact.phone_number
                 new_email = input(f"New email ({contact.email}): ") or contact.email
                 new_address = input(f"New address ({contact.address}): ") or contact.address
-                phonebook.update_contact(first_name, last_name,
-                                         phone_number=new_phone_number, email=new_email, address=new_address)
+                phonebook.update_contact(first_name, last_name, phone_number=new_phone_number, email=new_email, address=new_address)
             else:
                 print("Contact not found.")
-        
+
         elif choice == "3":
             first_name = input("First name of contact to delete: ")
             last_name = input("Last name: ")
             phonebook.remove_contact(first_name, last_name)
-        
+
         elif choice == "4":
-            query = input("Search query: ")
-            results = phonebook.search_contacts(query)
-            for result in results:
-                print(result)
-        
+            search_contacts(phonebook)
+
         elif choice == "5":
             phonebook.display_all_contacts()
-        
+
         elif choice == "6":
-            by = input("Sort by (first_name/last_name): ")
-            phonebook.sort_contacts(by)
-            phonebook.display_all_contacts()
-        
-        elif choice == "7":
-            grouped_contacts = phonebook.group_contacts()
-            for group, contacts in grouped_contacts.items():
-                print(f"\n{group}")
-                for contact in contacts:
-                    print(contact)
-        
-        elif choice == "8":
             file_path = input("Enter CSV file path: ")
             phonebook.batch_import(file_path)
-        
-        elif choice == "9":
-            start_date = input("Enter start date (YYYY-MM-DD): ")
-            end_date = input("Enter end date (YYYY-MM-DD): ")
-            results = phonebook.search_by_date_range(start_date, end_date)
-            for result in results:
-                print(result)
-        
-        elif choice == "10":
+
+        elif choice == "7":
             phonebook.log_changes()
-        
-        elif choice == "11":
+
+        elif choice == "8":
             print("Exiting...")
             break
-        
+
         else:
             print("Invalid option. Try again.")
+
+
+def search_contacts(phonebook):
+    # Step 1: Wildcard Search
+    search_query = input("Enter search query (leave blank to skip): ").lower()
+
+    # Step 2: Ask if the user wants to filter by date range
+    filter_by_date = input("Would you like to filter by a date range? (y/n): ").lower()
+    if filter_by_date == 'y':
+        start_date = input("Enter start date (YYYY-MM-DD): ")
+        end_date = input("Enter end date (YYYY-MM-DD): ")
+        # Filter contacts by date range
+        results = phonebook.search_by_date_range(start_date, end_date)
+    else:
+        # Perform wildcard search (if a query is provided)
+        if search_query:
+            results = phonebook.search_contacts(search_query)
+        else:
+            results = phonebook.contacts  # No query means returning all contacts
+
+    # Step 3: Ask if the user wants to sort the results
+    sort_option = input("Sort by (first_name/last_name/none): ").lower()
+    if sort_option in ['first_name', 'last_name']:
+        phonebook.sort_contacts(by=sort_option)
+
+    # Step 4: Ask if the user wants to group the results by the initial letter of the last name
+    group_by_last_name = input("Would you like to group by last name initial? (y/n): ").lower()
+    if group_by_last_name == 'y':
+        grouped_contacts = phonebook.group_contacts()
+        for group, contacts in grouped_contacts.items():
+            print(f"\n{group}:")
+            for contact in contacts:
+                print(contact)
+    else:
+        # Display the sorted or filtered results without grouping
+        for contact in results:
+            print(contact)
+
 
 if __name__ == "__main__":
     main()
